@@ -34,7 +34,7 @@ const LoginForm = props => {
             'username': username,
             'password': password,
         });
-        let registerURL = 'http://' + props.apiHostname + '/user';
+        let registerURL = 'http://' + props.apiHostname + '/user/register';
         const apiHelper = new ApiHelper();
         try {
             const result = await apiHelper.callApi(registerURL, 'POST', {body: body});

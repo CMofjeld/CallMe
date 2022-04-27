@@ -26,7 +26,7 @@ public class UserController {
     private final UserService userService;
     private final JWTProvider jwtProvider;
 
-    @PostMapping
+    @PostMapping(path = "register")
     public ResponseEntity<UserView> registerNewUser(@Valid @RequestBody AppUser appUser) {
         AppUser createdUser = userService.addNewUser(appUser);
         UserView userView = new UserView(createdUser);
