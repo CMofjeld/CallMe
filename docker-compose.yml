@@ -6,15 +6,11 @@ services:
     build:
       dockerfile: Dockerfile.dev
       context: ./callme-client
-    depends_on:
-      - user
     environment:
       - REACT_APP_API_HOSTNAME=localhost:12345
+
   user:
-    image: 'carlanders/callme-user-service'
-    build:
-      dockerfile: Dockerfile.dev
-      context: ./user-service
+    image: 'carlanders/callme-services-user-service'
     depends_on:
       - postgres
     environment:
@@ -23,11 +19,27 @@ services:
       - DB_USER=user
       - JWT_EXPIRE_MS=86400000
       - JWT_SECRET=secret
+
+  status:
+    image: 'carlanders/callme-services-status-service'
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOSTNAME=redis
+      - REDIS_PASSWORD=password
+      - REDIS_PORT=6379
+      - USER_STATUS_TTL=30000
+
   postgres:
     image: 'postgres'
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
+
+  redis:
+    image: 'redis'
+    command: redis-server --requirepass password
+
   nginx:
     depends_on:
       - user
