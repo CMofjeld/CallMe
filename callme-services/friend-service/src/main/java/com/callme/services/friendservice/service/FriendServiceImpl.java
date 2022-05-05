@@ -8,10 +8,12 @@ import com.callme.services.friendservice.messaging.MessagePublisher;
 import com.callme.services.friendservice.model.FriendRelationship;
 import com.callme.services.friendservice.model.RelationshipStatus;
 import com.callme.services.friendservice.repository.FriendRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +31,8 @@ public class FriendServiceImpl implements FriendService{
 
     @Override
     @Transactional
-    public FriendRelationship save(FriendRelationship relationship) throws DuplicateRelationshipException, SelfRelationshipException {
+    public FriendRelationship save(FriendRelationship relationship) throws DuplicateRelationshipException, SelfRelationshipException, UserNotFoundException {
+        // Validate relationship
         if (!userServiceClient.userExists(relationship.getInvitee()) ||
             !userServiceClient.userExists(relationship.getInviter())) {
             throw new UserNotFoundException();
@@ -40,7 +43,28 @@ public class FriendServiceImpl implements FriendService{
         if (relationshipExistsBetween(relationship.getInviter(), relationship.getInvitee())) {
             throw new DuplicateRelationshipException();
         }
+        // Save the relationship
         relationship.setStatus(RelationshipStatus.PENDING);
-        return friendRepository.save(relationship);
+        FriendRelationship createdRelationship = friendRepository.save(relationship);
+        // Publish messages to notify both parties
+        try {
+            String jsonMessage = new ObjectMapper().writeValueAsString(createdRelationship);
+            messagePublisher.publish("friends." + relationship.getInviter(), jsonMessage);
+            messagePublisher.publish("friends." + relationship.getInvitee(), jsonMessage);
+        } catch (Exception e) {
+            System.err.println(e);
+        }
+        // Return the newly created relationship
+        return createdRelationship;
+    }
+
+    @Override
+    public List<FriendRelationship> findByUserId(Long userId) throws UserNotFoundException {
+        // Validate user ID
+        if (!userServiceClient.userExists(userId)) {
+            throw new UserNotFoundException();
+        }
+        // Find relationships where the user is either the inviter or invitee
+        return friendRepository.findByInviterOrInvitee(userId, userId);
     }
 }
