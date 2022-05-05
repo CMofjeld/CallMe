@@ -20,6 +20,7 @@
 		<module>common</module>
 		<module>status-service</module>
 		<module>user-service</module>
+		<module>friend-service</module>
 	</modules>
 
 	<properties>

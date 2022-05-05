@@ -12,13 +12,28 @@ services:
   user:
     image: 'carlanders/callme-services-user-service'
     depends_on:
-      - postgres
+      - user-db
     environment:
-      - DB_HOST_PORT=postgres:5432
+      - DB_HOST_PORT=user-db:5432
       - DB_PASS=password
       - DB_USER=user
       - JWT_EXPIRE_MS=86400000
       - JWT_SECRET=secret
+      - STATUS_SVC_URL=http://status:8080
+      - USER_SVC_URL=http://user:8080
+
+  friend:
+    image: 'carlanders/callme-services-friend-service'
+    depends_on:
+      - friend-db
+      - redis
+    environment:
+      - DB_HOST_PORT=friend-db:5432
+      - DB_PASS=password
+      - DB_USER=friend
+      - REDIS_HOSTNAME=redis
+      - REDIS_PASSWORD=password
+      - REDIS_PORT=6379
       - STATUS_SVC_URL=http://status:8080
       - USER_SVC_URL=http://user:8080
 
@@ -33,10 +48,16 @@ services:
       - USER_STATUS_TTL=30000
       - USER_SVC_URL=http://user:8080
 
-  postgres:
+  user-db:
     image: 'postgres'
     environment:
       - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+
+  friend-db:
+    image: 'postgres'
+    environment:
+      - POSTGRES_USER=friend
       - POSTGRES_PASSWORD=password
 
   redis:
