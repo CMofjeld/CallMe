@@ -1,4 +1,4 @@
-package com.example.statusservice.configuration;
+package com.callme.services.statusservice.configuration;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

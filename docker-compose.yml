@@ -19,6 +19,8 @@ services:
       - DB_USER=user
       - JWT_EXPIRE_MS=86400000
       - JWT_SECRET=secret
+      - STATUS_SVC_URL=http://status:8080
+      - USER_SVC_URL=http://user:8080
 
   status:
     image: 'carlanders/callme-services-status-service'
@@ -29,6 +31,7 @@ services:
       - REDIS_PASSWORD=password
       - REDIS_PORT=6379
       - USER_STATUS_TTL=30000
+      - USER_SVC_URL=http://user:8080
 
   postgres:
     image: 'postgres'

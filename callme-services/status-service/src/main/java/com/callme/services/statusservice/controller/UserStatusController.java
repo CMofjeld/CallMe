@@ -1,8 +1,8 @@
-package com.example.statusservice.controller;
+package com.callme.services.statusservice.controller;
 
-import com.example.statusservice.model.UserStatus;
-import com.example.statusservice.model.UserStatusView;
-import com.example.statusservice.service.UserStatusService;
+import com.callme.services.common.model.UserStatusView;
+import com.callme.services.statusservice.model.UserStatus;
+import com.callme.services.statusservice.service.UserStatusService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,10 +25,11 @@ public class UserStatusController {
     }
 
     @GetMapping(path = "{userId}")
-    public ResponseEntity<UserStatusView> getUserStatus(@PathVariable("userId") String userId) {
+    public ResponseEntity<UserStatusView> getUserStatus(@PathVariable("userId") Long userId) {
         Optional<UserStatus> optionalUserStatus = userStatusService.getUserStatusById(userId);
         if (optionalUserStatus.isPresent()) {
-            return ResponseEntity.ok().body(new UserStatusView(optionalUserStatus.get()));
+            UserStatus userStatus = optionalUserStatus.get();
+            return ResponseEntity.ok().body(new UserStatusView(userStatus.getId(), userStatus.getStatus()));
         } else {
             return new ResponseEntity(HttpStatus.NOT_FOUND);
         }

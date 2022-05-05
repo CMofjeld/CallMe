@@ -1,9 +1,10 @@
-package com.example.statusservice.service;
+package com.callme.services.statusservice.service;
 
-import com.example.statusservice.messaging.MessagePublisher;
-import com.example.statusservice.model.UserStatus;
-import com.example.statusservice.model.UserStatusView;
-import com.example.statusservice.repository.UserStatusRepository;
+import com.callme.services.common.model.UserStatusView;
+import com.callme.services.common.service.UserServiceClient;
+import com.callme.services.statusservice.messaging.MessagePublisher;
+import com.callme.services.statusservice.model.UserStatus;
+import com.callme.services.statusservice.repository.UserStatusRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -18,12 +19,17 @@ import java.util.Optional;
 public class UserStatusServiceImpl implements UserStatusService {
     private final UserStatusRepository userStatusRepository;
     private final MessagePublisher messagePublisher;
+    private final UserServiceClient userServiceClient;
     @Value("${USER_STATUS_TTL}")
     private Long userStatusTTL;
 
     @Override
-    public Optional<UserStatus> getUserStatusById(String id) {
-        // TODO validate user ID
+    public Optional<UserStatus> getUserStatusById(Long id) {
+        // Validate User ID
+        if (!userServiceClient.userExists(id)) {
+            return Optional.empty();
+        }
+
         Optional<UserStatus> optionalUserStatus = userStatusRepository.findById(id);
         if (optionalUserStatus.isPresent()) {
             // Status for that user found
@@ -47,7 +53,11 @@ public class UserStatusServiceImpl implements UserStatusService {
 
     @Override
     public boolean saveUserStatus(UserStatus userStatus) {
-        // TODO check that user ID is valid
+        // Validate User ID
+        if (!userServiceClient.userExists(userStatus.getId())) {
+            return false;
+        }
+
         if (userStatus.getStatus().equals("offline")) {
             // Can remove existing entry to indicate offline
             userStatusRepository.delete(userStatus);
@@ -59,13 +69,13 @@ public class UserStatusServiceImpl implements UserStatusService {
     }
 
     @Override
-    public void deleteUserStatus(String id) {
+    public void deleteUserStatus(Long id) {
         userStatusRepository.deleteById(id);
     }
 
     private void publishUserStatus(UserStatus userStatus) {
         try {
-            UserStatusView userStatusView = new UserStatusView(userStatus);
+            UserStatusView userStatusView = new UserStatusView(userStatus.getId(), userStatus.getStatus());
             String statusMessage = new ObjectMapper().writeValueAsString(userStatusView);
             messagePublisher.publish("status." + userStatus.getId(), statusMessage);
         } catch (JsonProcessingException e) {

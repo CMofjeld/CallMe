@@ -1,11 +1,9 @@
-package com.example.statusservice;
+package com.callme.services.statusservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.data.redis.core.RedisTemplate;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.callme")
 public class StatusServiceApplication {
 
 	public static void main(String[] args) {

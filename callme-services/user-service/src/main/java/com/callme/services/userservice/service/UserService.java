@@ -2,8 +2,8 @@ package com.callme.services.userservice.service;
 
 import com.callme.services.userservice.exception.DuplicateUsernameException;
 import com.callme.services.userservice.exception.UserNotFoundException;
-import com.callme.services.userservice.repository.UserRepository;
 import com.callme.services.userservice.model.AppUser;
+import com.callme.services.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;

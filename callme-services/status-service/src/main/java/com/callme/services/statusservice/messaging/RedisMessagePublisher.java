@@ -1,6 +1,5 @@
-package com.example.statusservice.messaging;
+package com.callme.services.statusservice.messaging;
 
-import com.example.statusservice.model.UserStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;

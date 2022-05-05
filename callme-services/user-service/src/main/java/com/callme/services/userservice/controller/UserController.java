@@ -1,9 +1,11 @@
 package com.callme.services.userservice.controller;
 
+import com.callme.services.common.model.UserStatusView;
+import com.callme.services.common.model.UserView;
+import com.callme.services.common.service.StatusServiceClient;
 import com.callme.services.userservice.exception.InvalidPasswordException;
 import com.callme.services.userservice.exception.UserNotFoundException;
 import com.callme.services.userservice.model.AppUser;
-import com.callme.services.userservice.model.UserView;
 import com.callme.services.userservice.payload.LoginRequest;
 import com.callme.services.userservice.payload.LoginResponse;
 import com.callme.services.userservice.security.JWTProvider;
@@ -24,11 +26,12 @@ import java.util.Optional;
 public class UserController {
     private final UserService userService;
     private final JWTProvider jwtProvider;
+    private final StatusServiceClient statusServiceClient;
 
     @PostMapping(path = "register")
     public ResponseEntity<UserView> registerNewUser(@Valid @RequestBody AppUser appUser) {
         AppUser createdUser = userService.addNewUser(appUser);
-        UserView userView = new UserView(createdUser);
+        UserView userView = new UserView(appUser.getId(), appUser.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED).body(userView);
     }
 
@@ -36,7 +39,8 @@ public class UserController {
     public ResponseEntity<UserView> getUserById(@PathVariable("userId") Long userId) {
         Optional<AppUser> userOptional = userService.getUserById(userId);
         if (userOptional.isPresent()) {
-            UserView userView = new UserView(userOptional.get());
+            AppUser appUser = userOptional.get();
+            UserView userView = new UserView(appUser.getId(), appUser.getUsername());
             return ResponseEntity.ok().body(userView);
         } else {
             throw new UserNotFoundException();
@@ -55,9 +59,12 @@ public class UserController {
         // Generate JWT
         String token = jwtProvider.generateToken(appUser);
         // Set status to online
-        // TODO
+        UserStatusView status = new UserStatusView(appUser.getId(), "online");
+        if (!statusServiceClient.setUserStatus(status)) {
+            System.err.println("Failed to set status to online for user ID " + appUser.getId());
+        }
         // Construct and return response
-        LoginResponse loginResponse = new LoginResponse(token, new UserView(appUser));
+        LoginResponse loginResponse = new LoginResponse(token, new UserView(appUser.getId(), appUser.getUsername()));
         return ResponseEntity.status(HttpStatus.CREATED).body(loginResponse);
     }
 
