@@ -1,9 +1,7 @@
 package com.callme.services.friendservice.service;
 
 import com.callme.services.common.service.UserServiceClient;
-import com.callme.services.friendservice.exception.DuplicateRelationshipException;
-import com.callme.services.friendservice.exception.SelfRelationshipException;
-import com.callme.services.friendservice.exception.UserNotFoundException;
+import com.callme.services.friendservice.exception.*;
 import com.callme.services.friendservice.messaging.MessagePublisher;
 import com.callme.services.friendservice.model.FriendRelationship;
 import com.callme.services.friendservice.model.RelationshipStatus;
@@ -66,5 +64,29 @@ public class FriendServiceImpl implements FriendService{
         }
         // Find relationships where the user is either the inviter or invitee
         return friendRepository.findByInviterOrInvitee(userId, userId);
+    }
+
+    @Override
+    @Transactional
+    public void updateRelationshipStatus(Long id, RelationshipStatus newStatus) throws RelationshipNotFoundException, InvalidRelationshipStatusException {
+        // Get the relationship with that ID
+        FriendRelationship relationship = friendRepository.findById(id)
+                .orElseThrow(RelationshipNotFoundException::new);
+        RelationshipStatus previousStatus = relationship.getStatus();
+        // Validate the change to status
+        if ((newStatus.equals(RelationshipStatus.ACCEPTED) || newStatus.equals(RelationshipStatus.DECLINED)) &&
+            !previousStatus.equals(RelationshipStatus.PENDING)) {
+            throw new InvalidRelationshipStatusException();
+        }
+        // Update the relationship
+        relationship.setStatus(newStatus);
+        // Notify users of the change
+        try {
+            String jsonMessage = new ObjectMapper().writeValueAsString(relationship);
+            messagePublisher.publish("friends." + relationship.getInviter(), jsonMessage);
+            messagePublisher.publish("friends." + relationship.getInvitee(), jsonMessage);
+        } catch (Exception e) {
+            System.err.println(e);
+        }
     }
 }
