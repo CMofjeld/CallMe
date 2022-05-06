@@ -8,6 +8,11 @@ services:
       context: ./callme-client
     environment:
       - REACT_APP_API_HOSTNAME=localhost:12345
+      - WDS_SOCKET_PORT=0
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./callme-client:/app/
+      - nodemodules:/app/node_modules
 
   user:
     image: 'carlanders/callme-services-user-service'
@@ -74,3 +79,6 @@ services:
       context: ./nginx
     ports:
       - '12345:80'
+
+volumes:
+  nodemodules: {}

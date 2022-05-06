@@ -1,9 +1,10 @@
-import logo from './logo.svg';
 import './App.css';
 import { Route, Routes } from "react-router-dom";
 import { useState } from 'react';
 import AppNavbar from './components/AppNavbar';
 import LoginForm from './components/LoginForm';
+import CallPage from './components/CallPage';
+import FriendPage from './components/FriendPage';
 
 function App() {
   const API_HOSTNAME = process.env.REACT_APP_API_HOSTNAME
@@ -20,20 +21,11 @@ function App() {
   }
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <AppNavbar />
+      <Routes>
+        <Route path='/' element={<CallPage apiHostname={API_HOSTNAME} apiToken={apiToken} userId={userId} />} />
+        <Route path='/friends' element={<FriendPage apiHostname={API_HOSTNAME} apiToken={apiToken} userId={userId} />} />
+      </Routes>
     </div>
   );
 }

@@ -13,10 +13,10 @@ const AppNavbar = () => {
             <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className='justify-content-center'>
                     <LinkContainer to={'/'}>
-                        <Nav.Link>Login</Nav.Link>
+                        <Nav.Link>Home</Nav.Link>
                     </LinkContainer>
-                    <LinkContainer to={'/signup'}>
-                        <Nav.Link>Sign Up</Nav.Link>
+                    <LinkContainer to={'/friends'}>
+                        <Nav.Link>Friends</Nav.Link>
                     </LinkContainer>
                 </Nav>
             </Navbar.Collapse>

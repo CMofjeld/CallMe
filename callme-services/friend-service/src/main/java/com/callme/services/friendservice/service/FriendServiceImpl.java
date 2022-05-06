@@ -63,7 +63,7 @@ public class FriendServiceImpl implements FriendService{
             throw new UserNotFoundException();
         }
         // Find relationships where the user is either the inviter or invitee
-        return friendRepository.findByInviterOrInvitee(userId, userId);
+        return friendRepository.findDistinctByInviterOrInvitee(userId, userId);
     }
 
     @Override
