@@ -2,7 +2,7 @@ package com.callme.services.friendservice.controller;
 
 import com.callme.services.friendservice.exception.*;
 import com.callme.services.friendservice.model.FriendRelationship;
-import com.callme.services.friendservice.model.StatusUpdateRequest;
+import com.callme.services.friendservice.model.Invitation;
 import com.callme.services.friendservice.service.FriendService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,15 +19,13 @@ import java.util.List;
 public class FriendController {
     private final FriendService friendService;
 
-    @PostMapping
-    public ResponseEntity<FriendRelationship> createRelationship(
-            @Valid @RequestBody FriendRelationship relationship
-    ) throws DuplicateRelationshipException,
-            SelfRelationshipException,
-            UserNotFoundException {
+    @PostMapping(path = "invitation")
+    public ResponseEntity<Invitation> createInvitation(
+            @Valid @RequestBody Invitation invitation
+    ) throws DuplicateRelationshipException, SelfRelationshipException {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(friendService.save(relationship));
+                .body(friendService.createInvitation(invitation));
     }
 
     @GetMapping(path = "user/{userId}")
@@ -36,18 +34,40 @@ public class FriendController {
     ) throws UserNotFoundException {
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(friendService.findByUserId(userId));
+                .body(friendService.findFriendsByUserId(userId));
     }
 
-    @PatchMapping(path = "{id}/status")
-    public ResponseEntity<Void> updateRelationshipStatus(
-            @PathVariable("id") Long id,
-            @Valid @RequestBody StatusUpdateRequest request
-    ) throws RelationshipNotFoundException,
-            InvalidRelationshipStatusException {
-        System.out.println(id);
-        System.out.println(request);
-        friendService.updateRelationshipStatus(id, request.getStatus());
-        return ResponseEntity.noContent().build();
+    @PostMapping(path = "invitation/{invitationId}/accept")
+    public ResponseEntity<Void> acceptInvitation(
+            @PathVariable("invitationId") Long invitationId
+    ) throws InvitationNotFoundException {
+        friendService.acceptInvitation(invitationId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(path = "invitation/{invitationId}/decline")
+    public ResponseEntity<Void> declineInvitation(
+            @PathVariable("invitationId") Long invitationId
+    ) throws InvitationNotFoundException {
+        friendService.declineInvitation(invitationId);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping(path = "invitation/user/{userId}/outgoing")
+    public ResponseEntity<List<Invitation>> getOutgoingInvitations(
+            @PathVariable("userId") Long userId
+    ) throws UserNotFoundException {
+        return ResponseEntity
+                .ok()
+                .body(friendService.findInvitationsByInviter(userId));
+    }
+
+    @GetMapping(path = "invitation/user/{userId}/incoming")
+    public ResponseEntity<List<Invitation>> getIncomingInvitations(
+            @PathVariable("userId") Long userId
+    ) throws UserNotFoundException {
+        return ResponseEntity
+                .ok()
+                .body(friendService.findInvitationsByInvitee(userId));
     }
 }

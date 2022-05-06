@@ -77,4 +77,12 @@ public class UserController {
         }
         return new ResponseEntity<>(status);
     }
+
+    @GetMapping(path = "by/username/{username}")
+    public ResponseEntity<UserView> getUserByUsername(@PathVariable("username") String username) {
+        AppUser user = userService.getUserByUsername(username)
+                .orElseThrow(UserNotFoundException::new);
+        UserView userView = new UserView(user.getId(), user.getUsername());
+        return ResponseEntity.ok().body(userView);
+    }
 }

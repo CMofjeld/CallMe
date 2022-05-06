@@ -2,15 +2,18 @@ package com.callme.services.friendservice.service;
 
 import com.callme.services.friendservice.exception.*;
 import com.callme.services.friendservice.model.FriendRelationship;
-import com.callme.services.friendservice.model.RelationshipStatus;
+import com.callme.services.friendservice.model.Invitation;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public interface FriendService {
-    public boolean relationshipExistsBetween(Long user1, Long user2);
-    public FriendRelationship save(FriendRelationship relationship) throws DuplicateRelationshipException, SelfRelationshipException, UserNotFoundException;
-    public List<FriendRelationship> findByUserId(Long userId) throws UserNotFoundException;
-    public void updateRelationshipStatus(Long id, RelationshipStatus newStatus) throws RelationshipNotFoundException, InvalidRelationshipStatusException;
+    public boolean areFriends(Long user1, Long user2);
+    public Invitation createInvitation(Invitation invitation) throws DuplicateRelationshipException, SelfRelationshipException;
+    public void acceptInvitation(Long id) throws InvitationNotFoundException;
+    public void declineInvitation(Long id) throws InvitationNotFoundException;
+    public List<FriendRelationship> findFriendsByUserId(Long userId) throws UserNotFoundException;
+    public List<Invitation> findInvitationsByInviter(Long inviter) throws UserNotFoundException;
+    public List<Invitation> findInvitationsByInvitee(Long invitee) throws UserNotFoundException;
 }

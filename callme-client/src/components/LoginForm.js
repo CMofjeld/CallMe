@@ -58,7 +58,6 @@ const LoginForm = props => {
         } else if (buttonPressed === "register") {
             await registerUser();
         }
-        console.log(buttonPressed);
     };
 
     return (

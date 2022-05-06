@@ -1,12 +1,12 @@
 package com.callme.services.friendservice.model;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 @Entity
 @Table
@@ -14,20 +14,20 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class FriendRelationship {
+public class Invitation {
     @Id
     @SequenceGenerator(
-            name = "friend_sequence",
-            sequenceName = "friend_sequence",
+            name = "invitation_sequence",
+            sequenceName = "invitation_sequence",
             allocationSize = 1
     )
     @GeneratedValue(
             strategy = GenerationType.SEQUENCE,
-            generator = "friend_sequence"
+            generator = "invitation_sequence"
     )
     private Long id;
     @NotNull
-    Long userId;
+    Long inviter;
     @NotNull
-    Long friendId;
+    Long invitee;
 }
