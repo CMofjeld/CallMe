@@ -27,13 +27,16 @@ public class FriendServiceImpl implements FriendService{
     private final InvitationRepository invitationRepository;
 
     @Override
-    public boolean areFriends(Long user1, Long user2) {
+    public boolean areFriends(Long user1, Long user2) throws UserNotFoundException {
+        if (!userServiceClient.userExists(user1) || !userServiceClient.userExists(user2)) {
+            throw new UserNotFoundException();
+        }
         return friendRepository.existsByUserIdAndFriendId(user1, user2);
     }
 
     @Override
     @Transactional
-    public Invitation createInvitation(Invitation invitation) throws DuplicateRelationshipException, SelfRelationshipException {
+    public Invitation createInvitation(Invitation invitation) throws DuplicateRelationshipException, SelfRelationshipException, UserNotFoundException {
         Long invitee = invitation.getInvitee();
         Long inviter = invitation.getInviter();
         // Check for existing friendship or invitation

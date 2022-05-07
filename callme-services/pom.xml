@@ -17,10 +17,11 @@
 	</parent>
 
 	<modules>
+		<module>call-service</module>
 		<module>common</module>
+		<module>friend-service</module>
 		<module>status-service</module>
 		<module>user-service</module>
-		<module>friend-service</module>
 		<module>websocket-service</module>
 	</modules>
 

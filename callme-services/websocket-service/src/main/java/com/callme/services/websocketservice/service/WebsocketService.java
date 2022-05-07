@@ -17,6 +17,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Component
 @AllArgsConstructor
@@ -66,9 +67,12 @@ public class WebsocketService extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         String sessionId = session.getId();
-        List<String> subscriptions = new ArrayList<>(subscriptionRegistry.getSubscriptionsById(sessionId));
-        for (String topic : subscriptions) {
-            removeSubscription(topic, sessionId);
+        Set<String> subscriptionsSet = subscriptionRegistry.getSubscriptionsById(sessionId);
+        if (subscriptionsSet != null) {
+            List<String> subscriptions = new ArrayList<>(subscriptionRegistry.getSubscriptionsById(sessionId));
+            for (String topic : subscriptions) {
+                removeSubscription(topic, sessionId);
+            }
         }
         sessionRegistry.removeSession(sessionId);
         System.out.println("Removed entry for: " + sessionId);

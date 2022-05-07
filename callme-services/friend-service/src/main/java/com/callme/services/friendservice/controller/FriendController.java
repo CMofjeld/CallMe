@@ -1,6 +1,7 @@
 package com.callme.services.friendservice.controller;
 
 import com.callme.services.friendservice.exception.*;
+import com.callme.services.friendservice.model.FriendQuery;
 import com.callme.services.friendservice.model.FriendRelationship;
 import com.callme.services.friendservice.model.Invitation;
 import com.callme.services.friendservice.service.FriendService;
@@ -22,7 +23,7 @@ public class FriendController {
     @PostMapping(path = "invitation")
     public ResponseEntity<Invitation> createInvitation(
             @Valid @RequestBody Invitation invitation
-    ) throws DuplicateRelationshipException, SelfRelationshipException {
+    ) throws DuplicateRelationshipException, SelfRelationshipException, UserNotFoundException {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(friendService.createInvitation(invitation));
@@ -69,5 +70,14 @@ public class FriendController {
         return ResponseEntity
                 .ok()
                 .body(friendService.findInvitationsByInvitee(userId));
+    }
+
+    @GetMapping(path = "are_friends")
+    public ResponseEntity<Void> areFriends(
+            @Valid @RequestBody FriendQuery friendQuery
+    ) throws UserNotFoundException {
+        return friendService.areFriends(friendQuery.getUser1(), friendQuery.getUser2()) ?
+                ResponseEntity.ok().build() :
+                ResponseEntity.badRequest().build();
     }
 }
