@@ -27,6 +27,12 @@ services:
       - STATUS_SVC_URL=http://status:8080
       - USER_SVC_URL=http://user:8080
 
+  user-db:
+    image: 'postgres'
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+
   friend:
     image: 'carlanders/callme-services-friend-service'
     depends_on:
@@ -42,6 +48,12 @@ services:
       - STATUS_SVC_URL=http://status:8080
       - USER_SVC_URL=http://user:8080
 
+  friend-db:
+    image: 'postgres'
+    environment:
+      - POSTGRES_USER=friend
+      - POSTGRES_PASSWORD=password
+
   status:
     image: 'carlanders/callme-services-status-service'
     depends_on:
@@ -53,17 +65,14 @@ services:
       - USER_STATUS_TTL=30000
       - USER_SVC_URL=http://user:8080
 
-  user-db:
-    image: 'postgres'
+  websocket:
+    image: 'carlanders/callme-services-websocket-service'
+    depends_on:
+      - redis
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-
-  friend-db:
-    image: 'postgres'
-    environment:
-      - POSTGRES_USER=friend
-      - POSTGRES_PASSWORD=password
+      - REDIS_HOSTNAME=redis
+      - REDIS_PASSWORD=password
+      - REDIS_PORT=6379
 
   redis:
     image: 'redis'
