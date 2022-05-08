@@ -87,6 +87,13 @@ export async function postCallDisconnect(callId, apiToken, apiHostname) {
   return response.status;
 }
 
+export async function postCallDecline(callId, apiToken, apiHostname) {
+  const apiHelper = new ApiHelper();
+  let postUrl = "http://" + apiHostname + "/calls/" + callId + "/decline";
+  const response = await apiHelper.callApi(postUrl, 'POST', {token: apiToken});
+  return response.status;
+}
+
 export async function postCallAccept(callId, handshakeInfo, apiToken, apiHostname) {
   const apiHelper = new ApiHelper();
   let postUrl = "http://" + apiHostname + "/calls/" + callId +"/accept";

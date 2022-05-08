@@ -4,7 +4,7 @@ import SimplePeer, { Instance, SignalData } from "simple-peer";
 import WebSocketClient from '../helpers/WebSocketClient';
 import { Button, Container, Row, Col } from "react-bootstrap";
 import SendCallForm from "./SendCallForm";
-import { getUserId, getUsername, postCallAccept, postCallDisconnect, postCallInitiate } from "../helpers/ApiQueries";
+import { getUserId, getUsername, postCallAccept, postCallDecline, postCallDisconnect, postCallInitiate } from "../helpers/ApiQueries";
 
 const CallPage = props => {
   const videoSelf = useRef(null);
@@ -115,7 +115,15 @@ const CallPage = props => {
   }, [props.userId, props.apiToken, props.apiHostname, callId, handshakeInfo]);
 
   const declineCall = useCallback(async () => {
-
+    let responseStatus = await postCallDecline(
+      callId,
+      props.apiToken,
+      props.apiHostname
+    );
+    if (responseStatus !== 200) {
+      console.error("Non-200 status code from disconnect request: " + responseStatus);
+    }
+    resetPage();
   }, [callId, handshakeInfo]);
 
   const disconnectCall = useCallback(async () => {
@@ -127,9 +135,6 @@ const CallPage = props => {
     if (responseStatus !== 200) {
       console.error("Non-200 status code from disconnect request: " + responseStatus);
     }
-    // if (simplePeer !== null) {
-    //   simplePeer.destroy();
-    // }
     resetPage();
   }, [props.apiToken, props.apiHostname, callId, simplePeer]);
 
@@ -152,6 +157,11 @@ const CallPage = props => {
             simplePeer.signal(JSON.parse(message.handshakeInfo));
             break;
           case "disconnected":
+            alert("Call disconnected.");
+            resetPage();
+            break;
+          case "declined":
+            alert("Call declined.");
             resetPage();
             break;
           default:
@@ -177,8 +187,8 @@ const CallPage = props => {
     });
   }, []);
 
-  const setupWebsocket = useCallback(() => {
-    console.log("setupWebsocket");
+  useEffect(() => {
+    console.log("useEffect");
     let wsClient = WebSocketClient.getInstance();
     wsClient.waitForSocketConnection(() => {
       wsClient.sendMessage(JSON.stringify({
@@ -187,16 +197,8 @@ const CallPage = props => {
       }));
     });
     wsClient.addMessageHandler(messagePusher);
+    return () => wsClient.removeMessageHandler(messagePusher);
   }, [messagePusher]);
-
-  useEffect(() => {
-    console.log("useEffect");
-    let subscribed = false;
-    if (!subscribed) {
-      setupWebsocket();
-    }
-    return () => subscribed = true;
-  }, [setupWebsocket]);
 
   return (
     <Container>
