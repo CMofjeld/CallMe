@@ -4,9 +4,11 @@ import { Button, ListGroup, ListGroupItem } from 'react-bootstrap';
 import ApiHelper from '../helpers/ApiHelper';
 import {getUsername} from '../helpers/ApiQueries';
 import Invitation from '../helpers/Invitation';
+import WebSocketClient from '../helpers/WebSocketClient';
 
 const IncomingInvitationList = props => {
   const [invitations, setInvitations] = useState([]);
+  const [wsMessages, setWsMessages] = useState([]);
 
   const acceptInvitation = useCallback(async (invitationId) => {
     let apiHelper = new ApiHelper();
@@ -56,6 +58,58 @@ const IncomingInvitationList = props => {
   }, [props.apiHostname, props.userId, props.apiToken])
 
   useEffect(() => {loadInvitations()}, [loadInvitations]);
+
+  const messageHandler = useCallback(async () => {
+    if (wsMessages.length > 0) {
+      console.log("message handler");
+      let envelope = wsMessages[0];
+      if (envelope.topic[0] == "invitations") {
+        // Parse the JSON to a relationship object
+        let message = JSON.parse(envelope.body);
+        if (parseInt(message.invitee) === props.userId) {
+          if (message.status === "pending") {
+            // New incoming invitation - add it to the list
+            let invitation = Invitation.fromApiResponse(message, props.userId);
+            // Get their username
+            invitation.username = await getUsername(invitation.userId, props.apiToken, props.apiHostname);
+            setInvitations(currentInvitations => [...currentInvitations, invitation]);
+          } else {
+            // Invitations is no longer pending - remove it from the list
+            setInvitations(currentInvitations => currentInvitations.filter(inv => inv.id !== message.id));
+          }
+        }
+      }
+
+      // Pop the message from the queue
+      setWsMessages(currentMessages => {
+        return currentMessages.slice(1);
+      });
+    }
+  }, [wsMessages, props.apiToken, props.apiHostname, props.userId]);
+
+  useEffect(() => {
+    messageHandler();
+  }, [messageHandler]);
+  
+  const messagePusher = useCallback((jsonMessage) => {
+    console.log("message pusher");
+    setWsMessages(currentMessages => {
+      return [...currentMessages, jsonMessage]
+    });
+  }, []);
+
+  useEffect(() => {
+    console.log("useEffect");
+    let wsClient = WebSocketClient.getInstance();
+    wsClient.waitForSocketConnection(() => {
+      wsClient.sendMessage(JSON.stringify({
+        "topic": `invitations.${props.userId}`,
+        "action": "subscribe"
+      }));
+    });
+    wsClient.addMessageHandler(messagePusher);
+    return () => wsClient.removeMessageHandler(messagePusher);
+  }, [messagePusher]);
 
   return (
     <div>
