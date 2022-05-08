@@ -34,7 +34,8 @@ public class CallServiceImpl implements CallService {
     @Override
     @Transactional
     public String initiateCall(CallRequest callRequest) throws UserNotFoundException {
-        // TODO validate user IDs and friend status
+        // TODO validate user IDs, user status, and friend status
+        // TODO update user status
         // Create and store ongoing call
         Call call = new Call(callRequest.getCaller(), callRequest.getReceiver());
         callRepository.save(call);
@@ -60,6 +61,7 @@ public class CallServiceImpl implements CallService {
         if (call.getStatus() != CallStatus.initiating) {
             throw new InvalidCallActionException();
         }
+        // TODO update user status
         // Update call status
         call.setStatus(CallStatus.ongoing);
         callRepository.save(call);
@@ -83,6 +85,7 @@ public class CallServiceImpl implements CallService {
         if (call.getStatus() != CallStatus.initiating) {
             throw new InvalidCallActionException();
         }
+        // TODO update user status
         // Remove the call from the active set
         callRepository.delete(call);
         // Publish message to caller
@@ -114,6 +117,7 @@ public class CallServiceImpl implements CallService {
             call.getStatus() != CallStatus.initiating) {
             throw new InvalidCallActionException();
         }
+        // TODO update user status
         // Remove call from the active set
         callRepository.delete(call);
         // Create a new call record
@@ -125,16 +129,23 @@ public class CallServiceImpl implements CallService {
                 CallStatus.completed
         );
         callRecordRepository.save(callRecord);
-        // Publish message to receiver, if necessary
-        if (call.getStatus() == CallStatus.initiating) {
-            CallMessage callMessage = new CallMessage(
-                    call.getCaller(),
-                    call.getId(),
-                    CallMessageStatus.disconnected
-            );
-            String topic = "calls.%d".formatted(call.getReceiver());
-            publishCallMessage(callMessage, topic);
-        }
+        // Publish message to receiver
+        CallMessage callMessage = new CallMessage(
+                call.getCaller(),
+                call.getId(),
+                CallMessageStatus.disconnected
+        );
+        String topic = "calls.%d".formatted(call.getReceiver());
+        publishCallMessage(callMessage, topic);
+        // Publish message to caller
+        callMessage = new CallMessage(
+                call.getReceiver(),
+                call.getId(),
+                CallMessageStatus.disconnected
+        );
+        topic = "calls.%d".formatted(call.getCaller());
+        publishCallMessage(callMessage, topic);
+        // TODO update user status
     }
 
     @Override

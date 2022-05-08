@@ -74,6 +74,27 @@ services:
       - REDIS_PASSWORD=password
       - REDIS_PORT=6379
 
+  calls:
+    image: 'carlanders/callme-services-call-service'
+    depends_on:
+      - call-db
+      - redis
+    environment:
+      - DB_HOST_PORT=call-db:5432
+      - DB_PASS=password
+      - DB_USER=call
+      - REDIS_HOSTNAME=redis
+      - REDIS_PASSWORD=password
+      - REDIS_PORT=6379
+      - STATUS_SVC_URL=http://status:8080
+      - USER_SVC_URL=http://user:8080
+
+  call-db:
+    image: 'postgres'
+    environment:
+      - POSTGRES_USER=call
+      - POSTGRES_PASSWORD=password
+
   redis:
     image: 'redis'
     command: redis-server --requirepass password

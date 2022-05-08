@@ -1,16 +1,30 @@
 import './App.css';
 import { Route, Routes } from "react-router-dom";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AppNavbar from './components/AppNavbar';
 import LoginForm from './components/LoginForm';
 import CallPage from './components/CallPage';
 import FriendPage from './components/FriendPage';
+import WebSocketClient from './helpers/WebSocketClient';
 
 function App() {
   const API_HOSTNAME = process.env.REACT_APP_API_HOSTNAME
 
   const [apiToken, setApiToken] = useState();
   const [userId, setUserId] = useState();
+
+  // Connect to WebSocket only when user ID changes
+  useEffect(() => {
+    async function connectWS() {
+      if (userId) {
+        // Connect
+        const wsClient = await WebSocketClient.getInstance();
+        wsClient.path = `ws://${API_HOSTNAME}/websocket/${userId}`;
+        wsClient.connect();
+      }
+    }
+    connectWS();
+  }, [userId]);
 
   if (!apiToken || !userId) {
     return (
@@ -19,6 +33,7 @@ function App() {
       </div>
     )
   }
+
   return (
     <div className="App">
       <AppNavbar />

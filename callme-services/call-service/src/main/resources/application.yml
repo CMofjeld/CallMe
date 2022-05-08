@@ -2,6 +2,9 @@ server:
   error:
     include-message: always
     include-binding-errors: always
+  servlet:
+    session:
+      timeout: 30m
 
 spring:
   datasource:
