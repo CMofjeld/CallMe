@@ -89,7 +89,7 @@ const LoginForm = props => {
                             Register
                         </Button>
                         <span> </span>
-                        <Button variant="primary" type="submit" onClick={() => (setButtonPressed("login"))}>
+                        <Button autoFocus variant="primary" type="submit" onClick={() => (setButtonPressed("login"))}>
                             Log in
                         </Button>
                     </Form>

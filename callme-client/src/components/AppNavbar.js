@@ -1,8 +1,9 @@
 import React from 'react'
-import { Navbar, Nav, Container } from 'react-bootstrap';
+import PropTypes from 'prop-types'
+import { Navbar, Nav, Container, Button } from 'react-bootstrap';
 import { LinkContainer } from 'react-router-bootstrap';
 
-const AppNavbar = () => {
+const AppNavbar = props => {
   return (
     <Navbar bg='light' expand='lg' className='justify-content-center'>
         <Container>
@@ -23,9 +24,14 @@ const AppNavbar = () => {
                     </LinkContainer>
                 </Nav>
             </Navbar.Collapse>
+            <Button variant='outline-primary' onClick={props.logout}>Sign Out</Button>
         </Container>
     </Navbar>
   )
+}
+
+AppNavbar.propTypes = {
+  logout: PropTypes.func.isRequired,
 }
 
 export default AppNavbar

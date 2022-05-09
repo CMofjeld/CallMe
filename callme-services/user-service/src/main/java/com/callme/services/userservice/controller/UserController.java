@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -66,6 +67,22 @@ public class UserController {
         // Construct and return response
         LoginResponse loginResponse = new LoginResponse(token, new UserView(appUser.getId(), appUser.getUsername()));
         return ResponseEntity.status(HttpStatus.CREATED).body(loginResponse);
+    }
+
+    @PostMapping(path = "{userId}/logout")
+    public ResponseEntity<Void> logout(
+            @PathVariable("userId") Long userId
+    ) {
+        // Validate user ID
+        if (!userService.existsById(userId)) {
+            throw new UserNotFoundException();
+        }
+        // Set user status to offline
+        UserStatusView status = new UserStatusView(userId, "offline");
+        if (!statusServiceClient.setUserStatus(status)) {
+            System.err.println("Failed to set status to offline for user ID " + userId);
+        }
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping(path = "authenticate")

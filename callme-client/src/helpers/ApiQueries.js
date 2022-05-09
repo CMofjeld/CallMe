@@ -99,7 +99,7 @@ export async function postCallDecline(callId, apiToken, apiHostname) {
 export async function postCallAccept(callId, handshakeInfo, apiToken, apiHostname) {
   const apiHelper = new ApiHelper();
   let postUrl = "http://" + apiHostname + "/calls/" + callId +"/accept";
-  const response = await apiHelper.callApi(postUrl, 'POST', {body: handshakeInfo});
+  const response = await apiHelper.callApi(postUrl, 'POST', {body: handshakeInfo, token: apiToken});
   return response.status;
 }
 
@@ -108,10 +108,17 @@ export async function getCallRecords(userId, apiToken, apiHostname) {
   let jsonResponse = [];
   let getUrl = "http://" + apiHostname + "/calls/by/userId/" + userId;
   try {
-    const result = await apiHelper.callApi(getUrl, "GET", {"token": apiToken});
+    const result = await apiHelper.callApi(getUrl, "GET", {token: apiToken});
     jsonResponse = await result.json();
   } catch (error) {
     console.log(error);
   }
   return jsonResponse;
+}
+
+export async function postLogout(userId, apiToken, apiHostname) {
+  const apiHelper = new ApiHelper();
+  let postUrl = "http://" + apiHostname + "/user/" + userId +"/logout";
+  const response = await apiHelper.callApi(postUrl, 'POST', {token: apiToken});
+  return response.status;
 }

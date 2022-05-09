@@ -46,4 +46,8 @@ public class UserService {
     public Optional<AppUser> getUserByUsername(String username) {
         return userRepository.findUserByUsername(username);
     }
+
+    public boolean existsById(Long id) {
+        return userRepository.existsById(id);
+    }
 }

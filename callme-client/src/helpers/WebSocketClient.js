@@ -40,6 +40,21 @@ export default class WebSocketClient {
     };
   }
 
+  disconnect = () => {
+    this.socketRef.onclose = () => {};
+    this.socketRef.close();
+    this.socketRef = null;
+  }
+
+  removeAllHandlers = () => {
+    this.handlers = new Set();
+  }
+
+  shutdown = () => {
+    this.removeAllHandlers();
+    this.disconnect();
+  }
+
   handleMessage = (message) => {
     // Convert to JSON and extract subtopic for ease of use
     let jsonMessage = JSON.parse(message);
