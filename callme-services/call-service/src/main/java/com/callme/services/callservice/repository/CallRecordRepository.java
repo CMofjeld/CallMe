@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface CallRecordRepository extends JpaRepository<CallRecord, Long> {
     List<CallRecord> findDistinctByCallerOrReceiver(Long caller, Long receiver);
+    List<CallRecord> findTop50ByCallerOrReceiverOrderByStartedAtDesc(Long caller, Long receiver);
 }

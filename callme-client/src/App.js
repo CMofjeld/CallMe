@@ -6,6 +6,7 @@ import LoginForm from './components/LoginForm';
 import CallPage from './components/CallPage';
 import FriendPage from './components/FriendPage';
 import WebSocketClient from './helpers/WebSocketClient';
+import RecentCallsPage from './components/RecentCallsPage';
 
 function App() {
   const API_HOSTNAME = process.env.REACT_APP_API_HOSTNAME
@@ -40,6 +41,7 @@ function App() {
       <Routes>
         <Route path='/' element={<CallPage apiHostname={API_HOSTNAME} apiToken={apiToken} userId={userId} />} />
         <Route path='/friends' element={<FriendPage apiHostname={API_HOSTNAME} apiToken={apiToken} userId={userId} />} />
+        <Route path='/recent' element={<RecentCallsPage apiHostname={API_HOSTNAME} apiToken={apiToken} userId={userId} />} />
       </Routes>
     </div>
   );

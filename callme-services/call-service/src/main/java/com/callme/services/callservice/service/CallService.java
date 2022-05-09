@@ -11,7 +11,7 @@ import java.util.List;
 
 @Service
 public interface CallService {
-    public String initiateCall(CallRequest callRequest) throws UserNotFoundException;
+    public String initiateCall(CallRequest callRequest) throws UserNotFoundException, InvalidCallActionException;
     public void acceptCall(String callId, String handshakeInfo) throws CallNotFoundException, InvalidCallActionException;
     public void declineCall(String callId) throws CallNotFoundException, InvalidCallActionException;
     public void disconnectCall(String callId) throws CallNotFoundException, InvalidCallActionException;

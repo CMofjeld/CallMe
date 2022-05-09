@@ -118,6 +118,7 @@ const IncomingInvitationList = props => {
           {invitations.map(invitation => (
               <ListGroupItem key={invitation.id}>{invitation.username}<br></br>
               <Button variant='success' value={invitation.id} onClick={e => acceptInvitation(e.target.value)}>Accept</Button>
+              <span>  </span>
               <Button variant='danger' value={invitation.id} onClick={e => declineInvitation(e.target.value)}>Decline</Button>
               </ListGroupItem>
           ))}

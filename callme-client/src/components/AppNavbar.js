@@ -18,6 +18,9 @@ const AppNavbar = () => {
                     <LinkContainer to={'/friends'}>
                         <Nav.Link>Friends</Nav.Link>
                     </LinkContainer>
+                    <LinkContainer to={'/recent'}>
+                        <Nav.Link>Recent Calls</Nav.Link>
+                    </LinkContainer>
                 </Nav>
             </Navbar.Collapse>
         </Container>

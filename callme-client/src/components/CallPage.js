@@ -79,7 +79,7 @@ const CallPage = props => {
             if (returnedCallId === null || returnedCallId === undefined) {
               // Failed to initiate the call - clean up and reset
               resetPage();
-              sp.destroy();
+              return;
             }
             // Call succeeded - update connection status
             setCallId(returnedCallId);
@@ -97,7 +97,6 @@ const CallPage = props => {
             if (responseStatus !== 200) {
               console.error("Got back non-200 status code from accept post call: " + responseStatus);
               resetPage();
-              sp.destroy();
             }
           });
         }
@@ -221,8 +220,9 @@ const CallPage = props => {
           {connectionStatus === "receiving" && (
             <div>
               <p>Receiving Call from {callerName}.</p>
-              <Button onClick={() => initiateOrAcceptCall(false)}>Answer</Button>
-              <Button onClick={declineCall}>Decline</Button>
+              <Button variant="success" onClick={() => initiateOrAcceptCall(false)}>Answer</Button>
+              <span>  </span>
+              <Button variant="danger" onClick={declineCall}>Decline</Button>
             </div>
           )}
         </Col>

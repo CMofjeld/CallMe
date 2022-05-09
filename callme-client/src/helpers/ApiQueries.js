@@ -75,7 +75,9 @@ export async function postCallInitiate(userId, receiverId, apiToken, apiHostname
     callId = await response.text();
   } else {
     console.error(response.status);
-    alert("Something went wrong.");
+    let responseJson = await response.json();
+    let errorMessage = responseJson.message;
+    alert(errorMessage);
   }
   return callId;
 }
@@ -99,4 +101,17 @@ export async function postCallAccept(callId, handshakeInfo, apiToken, apiHostnam
   let postUrl = "http://" + apiHostname + "/calls/" + callId +"/accept";
   const response = await apiHelper.callApi(postUrl, 'POST', {body: handshakeInfo});
   return response.status;
+}
+
+export async function getCallRecords(userId, apiToken, apiHostname) {
+  const apiHelper = new ApiHelper();
+  let jsonResponse = [];
+  let getUrl = "http://" + apiHostname + "/calls/by/userId/" + userId;
+  try {
+    const result = await apiHelper.callApi(getUrl, "GET", {"token": apiToken});
+    jsonResponse = await result.json();
+  } catch (error) {
+    console.log(error);
+  }
+  return jsonResponse;
 }

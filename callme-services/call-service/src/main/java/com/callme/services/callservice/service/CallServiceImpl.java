@@ -13,11 +13,15 @@ import com.callme.services.callservice.model.CallStatus;
 import com.callme.services.callservice.repository.CallRecordRepository;
 import com.callme.services.callservice.repository.CallRepository;
 import com.callme.services.common.model.UserStatusView;
+import com.callme.services.common.service.FriendServiceClient;
+import com.callme.services.common.service.StatusServiceClient;
 import com.callme.services.common.service.UserServiceClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
@@ -30,12 +34,33 @@ public class CallServiceImpl implements CallService {
     private final CallRecordRepository callRecordRepository;
     private final MessagePublisher messagePublisher;
     private final ObjectMapper objectMapper;
+    private final UserServiceClient userServiceClient;
+    private final StatusServiceClient statusServiceClient;
+    private final FriendServiceClient friendServiceClient;
 
     @Override
     @Transactional
-    public String initiateCall(CallRequest callRequest) throws UserNotFoundException {
-        // TODO validate user IDs, user status, and friend status
-        // TODO update user status
+    public String initiateCall(CallRequest callRequest) throws UserNotFoundException, InvalidCallActionException {
+        // Validate user IDs
+        Long caller = callRequest.getCaller();
+        Long receiver = callRequest.getReceiver();
+        if (!userServiceClient.userExists(caller) ||
+            !userServiceClient.userExists(receiver)) {
+            throw new UserNotFoundException();
+        }
+        // Ensure receiver is online and not busy
+        UserStatusView receiverStatus = statusServiceClient.getUserStatus(receiver)
+                .orElseThrow(UserNotFoundException::new);
+        if (!receiverStatus.getStatus().equals("online")) {
+            throw new ResponseStatusException(HttpStatus.PRECONDITION_FAILED, "Receiver is busy or offline");
+        }
+        // Ensure caller and receiver are friends
+        if (!friendServiceClient.areFriends(caller, receiver)) {
+            throw new ResponseStatusException(HttpStatus.PRECONDITION_FAILED, "Not friends with the receiver");
+        }
+        // Update user statuses
+        updateStatusForUser(caller, "busy");
+        updateStatusForUser(receiver, "busy");
         // Create and store ongoing call
         Call call = new Call(callRequest.getCaller(), callRequest.getReceiver());
         callRepository.save(call);
@@ -61,7 +86,6 @@ public class CallServiceImpl implements CallService {
         if (call.getStatus() != CallStatus.initiating) {
             throw new InvalidCallActionException();
         }
-        // TODO update user status
         // Update call status
         call.setStatus(CallStatus.ongoing);
         callRepository.save(call);
@@ -85,7 +109,6 @@ public class CallServiceImpl implements CallService {
         if (call.getStatus() != CallStatus.initiating) {
             throw new InvalidCallActionException();
         }
-        // TODO update user status
         // Remove the call from the active set
         callRepository.delete(call);
         // Publish message to caller
@@ -97,14 +120,19 @@ public class CallServiceImpl implements CallService {
         String topic = "calls.%d".formatted(call.getCaller());
         publishCallMessage(callMessage, topic);
         // Create new call record
+        Long caller = call.getCaller();
+        Long receiver = call.getReceiver();
         CallRecord callRecord = new CallRecord(
-                call.getCaller(),
-                call.getReceiver(),
+                caller,
+                receiver,
                 call.getStartedAt(),
                 LocalDateTime.now(),
                 CallStatus.declined
         );
         callRecordRepository.save(callRecord);
+        // Update user statuses
+        updateStatusForUser(caller, "online");
+        updateStatusForUser(receiver, "online");
     }
 
     @Override
@@ -117,13 +145,14 @@ public class CallServiceImpl implements CallService {
             call.getStatus() != CallStatus.initiating) {
             throw new InvalidCallActionException();
         }
-        // TODO update user status
         // Remove call from the active set
         callRepository.delete(call);
         // Create a new call record
+        Long caller = call.getCaller();
+        Long receiver = call.getReceiver();
         CallRecord callRecord = new CallRecord(
-                call.getCaller(),
-                call.getReceiver(),
+                caller,
+                receiver,
                 call.getStartedAt(),
                 LocalDateTime.now(),
                 CallStatus.completed
@@ -131,27 +160,32 @@ public class CallServiceImpl implements CallService {
         callRecordRepository.save(callRecord);
         // Publish message to receiver
         CallMessage callMessage = new CallMessage(
-                call.getCaller(),
+                caller,
                 call.getId(),
                 CallMessageStatus.disconnected
         );
-        String topic = "calls.%d".formatted(call.getReceiver());
+        String topic = "calls.%d".formatted(receiver);
         publishCallMessage(callMessage, topic);
         // Publish message to caller
         callMessage = new CallMessage(
-                call.getReceiver(),
+                receiver,
                 call.getId(),
                 CallMessageStatus.disconnected
         );
-        topic = "calls.%d".formatted(call.getCaller());
+        topic = "calls.%d".formatted(caller);
         publishCallMessage(callMessage, topic);
-        // TODO update user status
+        // Update statuses
+        updateStatusForUser(caller, "online");
+        updateStatusForUser(receiver, "online");
     }
 
     @Override
     public List<CallRecord> findCallsByUserId(Long userId) throws UserNotFoundException {
-        // TODO validate user IDs
-        return callRecordRepository.findDistinctByCallerOrReceiver(userId, userId);
+        // Validate userId
+        if (!userServiceClient.userExists(userId)) {
+            throw new UserNotFoundException();
+        }
+        return callRecordRepository.findTop50ByCallerOrReceiverOrderByStartedAtDesc(userId, userId);
     }
 
     private void publishCallMessage(CallMessage callMessage, String topic) {
@@ -161,6 +195,13 @@ public class CallServiceImpl implements CallService {
         } catch (JsonProcessingException e) {
             System.err.println("Error serializing call message to JSON.");
             System.err.println(e);
+        }
+    }
+
+    private void updateStatusForUser(Long userId, String status) {
+        UserStatusView callerStatus = new UserStatusView(userId, status);
+        if (!statusServiceClient.setUserStatus(callerStatus)) {
+            System.err.println("Failed to set status to online for user ID " + userId);
         }
     }
 }

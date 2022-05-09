@@ -26,6 +26,7 @@ services:
       - JWT_SECRET=secret
       - STATUS_SVC_URL=http://status:8080
       - USER_SVC_URL=http://user:8080
+      - FRIEND_SVC_URL=http://friend:8080
 
   user-db:
     image: 'postgres'
@@ -47,6 +48,7 @@ services:
       - REDIS_PORT=6379
       - STATUS_SVC_URL=http://status:8080
       - USER_SVC_URL=http://user:8080
+      - FRIEND_SVC_URL=http://friend:8080
 
   friend-db:
     image: 'postgres'
@@ -62,8 +64,10 @@ services:
       - REDIS_HOSTNAME=redis
       - REDIS_PASSWORD=password
       - REDIS_PORT=6379
-      - USER_STATUS_TTL=30000
+      - USER_STATUS_TTL=300000
       - USER_SVC_URL=http://user:8080
+      - STATUS_SVC_URL=http://status:8080
+      - FRIEND_SVC_URL=http://friend:8080
 
   websocket:
     image: 'carlanders/callme-services-websocket-service'
@@ -88,6 +92,7 @@ services:
       - REDIS_PORT=6379
       - STATUS_SVC_URL=http://status:8080
       - USER_SVC_URL=http://user:8080
+      - FRIEND_SVC_URL=http://friend:8080
 
   call-db:
     image: 'postgres'

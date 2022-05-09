@@ -36,3 +36,8 @@
     transform: rotate(360deg);
   }
 }
+
+.call-status-indicator {
+  height: 32px;
+  width: 42px;
+}

@@ -83,7 +83,7 @@ const OutgoingInvitationList = props => {
 
   return (
     <div>
-      <h4>Outgoing Invitations</h4>
+      <h4>Outbound Invitations</h4>
       <ListGroup>
           {invitations.map(invitation => (
               <ListGroupItem key={invitation.id}>{invitation.username}</ListGroupItem>

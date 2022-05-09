@@ -23,7 +23,7 @@ public class CallController {
     @PostMapping(path = "initiate")
     public ResponseEntity<String> initiateCall(
             @Valid @RequestBody CallRequest callRequest
-    ) throws UserNotFoundException {
+    ) throws UserNotFoundException, InvalidCallActionException {
         return ResponseEntity.ok(
                 callService.initiateCall(callRequest)
         );

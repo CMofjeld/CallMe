@@ -5,16 +5,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserStatusView {
+public class FriendQuery {
     @NotNull
-    private Long id;
-    @NotBlank
-    private String status;
+    private Long user1;
+    @NotNull
+    private Long user2;
 }

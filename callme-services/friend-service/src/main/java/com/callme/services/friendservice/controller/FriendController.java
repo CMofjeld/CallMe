@@ -72,7 +72,7 @@ public class FriendController {
                 .body(friendService.findInvitationsByInvitee(userId));
     }
 
-    @GetMapping(path = "are_friends")
+    @PostMapping(path = "are_friends")
     public ResponseEntity<Void> areFriends(
             @Valid @RequestBody FriendQuery friendQuery
     ) throws UserNotFoundException {
