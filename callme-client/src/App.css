@@ -41,3 +41,12 @@
   height: 32px;
   width: 42px;
 }
+
+.call-username {
+  font-weight: bold;
+}
+
+.video-block {
+  width: 80%;
+  height: auto;
+}

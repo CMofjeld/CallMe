@@ -40,13 +40,13 @@ const RecentCallsPage = props => {
 
   return (
     <Container>
-    <Row><h4>Recent Calls</h4></Row>
-    <Row>
+    <Row xs lg='3' className="justify-content-md-center"><h4>Recent Calls</h4></Row>
+    <Row xs lg='3' className="justify-content-md-center">
         <ListGroup>
           {calls.map(call => (
               <ListGroupItem key={call.id}>
                 <img className='call-status-indicator' src={imgSrcFromCall(call)}/>
-                {call.friendUsername} - {call.timestamp.toLocaleString()}
+                <span className='call-username'>{call.friendUsername}</span> - {call.timestamp.toLocaleString()}
                 </ListGroupItem>
           ))}
         </ListGroup>
