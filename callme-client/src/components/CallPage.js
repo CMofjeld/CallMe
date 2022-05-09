@@ -203,7 +203,7 @@ const CallPage = props => {
     <Container>
       <Row>
         <Col>
-          <video ref={videoSelf} className="video-block" />
+          <video ref={videoSelf} muted="muted" className="video-block" />
         </Col>
         <Col>
           <video ref={videoCaller} className="video-block" />
