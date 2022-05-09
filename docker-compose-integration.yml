@@ -1,0 +1,133 @@
+version: '3'
+
+services:
+  tester:
+    depends_on:
+      - user
+      - friend
+      - status
+      - calls
+      - nginx
+    build:
+      dockerfile: Dockerfile
+      context: ./integration-tests
+    environment:
+      - STARTUP_TIME=30
+      - API_ADDRESS=http://nginx
+
+  client:
+    image: 'carlanders/callme-client'
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./callme-client
+    environment:
+      - REACT_APP_API_HOSTNAME=localhost:12345
+      - WDS_SOCKET_PORT=0
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./callme-client:/app/
+      - nodemodules:/app/node_modules
+
+  user:
+    image: 'carlanders/callme-services-user-service'
+    depends_on:
+      - user-db
+    environment:
+      - DB_HOST_PORT=user-db:5432
+      - DB_PASS=password
+      - DB_USER=user
+      - JWT_EXPIRE_MS=86400000
+      - JWT_SECRET=secret
+      - STATUS_SVC_URL=http://status:8080
+      - USER_SVC_URL=http://user:8080
+      - FRIEND_SVC_URL=http://friend:8080
+
+  user-db:
+    image: 'postgres'
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+
+  friend:
+    image: 'carlanders/callme-services-friend-service'
+    depends_on:
+      - friend-db
+      - redis
+    environment:
+      - DB_HOST_PORT=friend-db:5432
+      - DB_PASS=password
+      - DB_USER=friend
+      - REDIS_HOSTNAME=redis
+      - REDIS_PASSWORD=password
+      - REDIS_PORT=6379
+      - STATUS_SVC_URL=http://status:8080
+      - USER_SVC_URL=http://user:8080
+      - FRIEND_SVC_URL=http://friend:8080
+
+  friend-db:
+    image: 'postgres'
+    environment:
+      - POSTGRES_USER=friend
+      - POSTGRES_PASSWORD=password
+
+  status:
+    image: 'carlanders/callme-services-status-service'
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOSTNAME=redis
+      - REDIS_PASSWORD=password
+      - REDIS_PORT=6379
+      - USER_STATUS_TTL=300000
+      - USER_SVC_URL=http://user:8080
+      - STATUS_SVC_URL=http://status:8080
+      - FRIEND_SVC_URL=http://friend:8080
+
+  websocket:
+    image: 'carlanders/callme-services-websocket-service'
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOSTNAME=redis
+      - REDIS_PASSWORD=password
+      - REDIS_PORT=6379
+
+  calls:
+    image: 'carlanders/callme-services-call-service'
+    depends_on:
+      - call-db
+      - redis
+    environment:
+      - DB_HOST_PORT=call-db:5432
+      - DB_PASS=password
+      - DB_USER=call
+      - REDIS_HOSTNAME=redis
+      - REDIS_PASSWORD=password
+      - REDIS_PORT=6379
+      - STATUS_SVC_URL=http://status:8080
+      - USER_SVC_URL=http://user:8080
+      - FRIEND_SVC_URL=http://friend:8080
+
+  call-db:
+    image: 'postgres'
+    environment:
+      - POSTGRES_USER=call
+      - POSTGRES_PASSWORD=password
+
+  redis:
+    image: 'redis'
+    command: redis-server --requirepass password
+
+  nginx:
+    depends_on:
+      - user
+      - client
+    restart: always
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./nginx
+    ports:
+      - '12345:80'
+
+volumes:
+  nodemodules: {}
