@@ -24,6 +24,5 @@ public class UserStatus implements Serializable {
     public UserStatus(Long id, String status) {
         this.id = id;
         this.status = status;
-        this.updatedAt = new Date().getTime();
     }
 }

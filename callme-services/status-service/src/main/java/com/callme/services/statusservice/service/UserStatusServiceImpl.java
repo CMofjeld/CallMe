@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -62,6 +63,7 @@ public class UserStatusServiceImpl implements UserStatusService {
             // Can remove existing entry to indicate offline
             userStatusRepository.delete(userStatus);
         } else {
+            userStatus.setUpdatedAt(new Date().getTime());
             userStatusRepository.save(userStatus);
         }
         publishUserStatus(userStatus);

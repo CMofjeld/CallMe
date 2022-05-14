@@ -4,6 +4,7 @@ import com.callme.services.common.model.UserStatusView;
 import com.callme.services.statusservice.model.UserStatus;
 import com.callme.services.statusservice.service.UserStatusService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
