@@ -20,7 +20,7 @@ public class SessionRegistry {
         sessions.put(key, entry);
     }
 
-    public void removeSession(String key) {
-        sessions.remove(key);
+    public SessionEntry removeSession(String key) {
+        return sessions.remove(key);
     }
 }

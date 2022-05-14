@@ -1,11 +1,15 @@
 package com.callme.services.websocketservice.service;
 
+import com.callme.services.websocketservice.messaging.MessagePublisher;
 import com.callme.services.websocketservice.messaging.RedisSubscriber;
 import com.callme.services.websocketservice.model.SessionEntry;
 import com.callme.services.websocketservice.model.SubscriptionMessage;
+import com.callme.services.websocketservice.task.HeartbeatTask;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
@@ -18,14 +22,21 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 @Component
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class WebsocketService extends TextWebSocketHandler {
     private final SessionRegistry sessionRegistry;
     private final SubscriptionRegistry subscriptionRegistry;
     private final RedisMessageListenerContainer messageListenerContainer;
+    private final MessagePublisher messagePublisher;
     private final MessageListenerAdapter listenerAdapter;
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
+    @Value("${HEARTBEAT_INTERVAL_MS}")
+    private long heartbeatInterval;
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
@@ -59,13 +70,17 @@ public class WebsocketService extends TextWebSocketHandler {
         // Create session entry and store it in the session directory
         System.out.println("after connection established");
         Long userId = (Long) session.getAttributes().get("userId");
-        SessionEntry sessionEntry = new SessionEntry(session, userId);
+        Future<?> heartbeatFuture = executorService.submit(
+                new HeartbeatTask(userId, heartbeatInterval, messagePublisher)
+        );
+        SessionEntry sessionEntry = new SessionEntry(session, userId, heartbeatFuture);
         sessionRegistry.setSession(session.getId(), sessionEntry);
         System.out.println("Added entry for: " + sessionEntry);
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+        // Remove the session's subscriptions
         String sessionId = session.getId();
         Set<String> subscriptionsSet = subscriptionRegistry.getSubscriptionsById(sessionId);
         if (subscriptionsSet != null) {
@@ -74,7 +89,10 @@ public class WebsocketService extends TextWebSocketHandler {
                 removeSubscription(topic, sessionId);
             }
         }
-        sessionRegistry.removeSession(sessionId);
+        // Remove it from the session registry
+        SessionEntry sessionEntry = sessionRegistry.removeSession(sessionId);
+        // Stop its heartbeat task
+        sessionEntry.getHeartbeatFuture().cancel(true);
         System.out.println("Removed entry for: " + sessionId);
     }
 

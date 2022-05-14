@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 
 @Getter
 @Setter
@@ -18,4 +19,5 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SessionEntry {
     private WebSocketSession session;
     private Long userId;
+    private Future<?> heartbeatFuture;
 }
