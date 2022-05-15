@@ -20,29 +20,48 @@ import java.util.List;
 public class FriendController {
     private final FriendService friendService;
 
+    private void logRequest(String requestAction) {
+        System.out.println("Received request to " + requestAction);
+    }
+
+    private void logResponse(String responseContent) {
+        System.out.println("Returning response with " + responseContent);
+    }
+
     @PostMapping(path = "invitation")
     public ResponseEntity<Invitation> createInvitation(
             @Valid @RequestBody Invitation invitation
     ) throws DuplicateRelationshipException, SelfRelationshipException, UserNotFoundException {
+        logRequest("send a friend invitation from user %d to user %d".formatted(
+                invitation.getInviter(),
+                invitation.getInvitee()
+        ));
+        Invitation createdInvitation = friendService.createInvitation(invitation);
+        logResponse("created invitation");
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(friendService.createInvitation(invitation));
+                .body(createdInvitation);
     }
 
     @GetMapping(path = "user/{userId}")
     public ResponseEntity<List<FriendRelationship>> findRelationshipsByUser(
             @PathVariable("userId") Long userId
     ) throws UserNotFoundException {
+        logRequest("get friends for user %d".formatted(userId));
+        List<FriendRelationship> friends = friendService.findFriendsByUserId(userId);
+        logResponse("list of friends");
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(friendService.findFriendsByUserId(userId));
+                .body(friends);
     }
 
     @PostMapping(path = "invitation/{invitationId}/accept")
     public ResponseEntity<Void> acceptInvitation(
             @PathVariable("invitationId") Long invitationId
     ) throws InvitationNotFoundException {
+        logRequest("accept invitation %d".formatted(invitationId));
         friendService.acceptInvitation(invitationId);
+        logResponse("status 200");
         return ResponseEntity.ok().build();
     }
 
@@ -58,6 +77,7 @@ public class FriendController {
     public ResponseEntity<List<Invitation>> getOutgoingInvitations(
             @PathVariable("userId") Long userId
     ) throws UserNotFoundException {
+        logRequest("get outbound invitations for user %d".formatted(userId));
         return ResponseEntity
                 .ok()
                 .body(friendService.findInvitationsByInviter(userId));
@@ -67,6 +87,7 @@ public class FriendController {
     public ResponseEntity<List<Invitation>> getIncomingInvitations(
             @PathVariable("userId") Long userId
     ) throws UserNotFoundException {
+        logRequest("get incoming invitations for user %d".formatted(userId));
         return ResponseEntity
                 .ok()
                 .body(friendService.findInvitationsByInvitee(userId));
@@ -76,8 +97,14 @@ public class FriendController {
     public ResponseEntity<Void> areFriends(
             @Valid @RequestBody FriendQuery friendQuery
     ) throws UserNotFoundException {
-        return friendService.areFriends(friendQuery.getUser1(), friendQuery.getUser2()) ?
-                ResponseEntity.ok().build() :
-                ResponseEntity.badRequest().build();
+        logRequest("check if user %d and user %d are friends");
+        boolean success = friendService.areFriends(friendQuery.getUser1(), friendQuery.getUser2());
+        if (success) {
+            logResponse("status 200");
+            return ResponseEntity.ok().build();
+        } else {
+            logResponse("status 400");
+            return ResponseEntity.badRequest().build();
+        }
     }
 }

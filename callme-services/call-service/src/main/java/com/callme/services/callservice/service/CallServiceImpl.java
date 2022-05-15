@@ -38,6 +38,18 @@ public class CallServiceImpl implements CallService {
     private final StatusServiceClient statusServiceClient;
     private final FriendServiceClient friendServiceClient;
 
+    private void logDBQuery(String dbName, String queryDescription) {
+        System.out.println("Querying %s to %s".formatted(dbName, queryDescription));
+    }
+
+    private void logDBStore(String dbName, String storedObject) {
+        System.out.println("Storing %s in %s".formatted(storedObject, dbName));
+    }
+
+    private void logDBDelete(String dbName, String storedObject) {
+        System.out.println("Deleting %s from %s".formatted(storedObject, dbName));
+    }
+
     @Override
     @Transactional
     public String initiateCall(CallRequest callRequest) throws UserNotFoundException, InvalidCallActionException {
@@ -62,6 +74,7 @@ public class CallServiceImpl implements CallService {
         updateStatusForUser(caller, "busy");
         updateStatusForUser(receiver, "busy");
         // Create and store ongoing call
+        logDBStore("redis", "new pending call");
         Call call = new Call(callRequest.getCaller(), callRequest.getReceiver());
         callRepository.save(call);
         // Publish message to receiver
@@ -81,6 +94,7 @@ public class CallServiceImpl implements CallService {
     @Transactional
     public void acceptCall(String callId, String handshakeInfo) throws CallNotFoundException, InvalidCallActionException {
         // Validate call action
+        logDBQuery("redis", "get call with ID %s".formatted(callId));
         Call call = callRepository.findById(callId)
                 .orElseThrow(CallNotFoundException::new);
         if (call.getStatus() != CallStatus.initiating) {
@@ -88,6 +102,7 @@ public class CallServiceImpl implements CallService {
         }
         // Update call status
         call.setStatus(CallStatus.ongoing);
+        logDBStore("redis", "updated call");
         callRepository.save(call);
         // Publish message to caller
         CallMessage callMessage = new CallMessage(
@@ -139,6 +154,7 @@ public class CallServiceImpl implements CallService {
     @Transactional
     public void disconnectCall(String callId) throws CallNotFoundException, InvalidCallActionException {
         // Validate call action
+        logDBQuery("redis", "get call with ID %s".formatted(callId));
         Call call = callRepository.findById(callId)
                 .orElseThrow(CallNotFoundException::new);
         if (call.getStatus() != CallStatus.ongoing &&
@@ -146,6 +162,7 @@ public class CallServiceImpl implements CallService {
             throw new InvalidCallActionException();
         }
         // Remove call from the active set
+        logDBDelete("redis", "call");
         callRepository.delete(call);
         // Create a new call record
         Long caller = call.getCaller();
@@ -157,6 +174,7 @@ public class CallServiceImpl implements CallService {
                 LocalDateTime.now(),
                 CallStatus.completed
         );
+        logDBStore("database", "call record");
         callRecordRepository.save(callRecord);
         // Publish message to receiver
         CallMessage callMessage = new CallMessage(
@@ -185,12 +203,14 @@ public class CallServiceImpl implements CallService {
         if (!userServiceClient.userExists(userId)) {
             throw new UserNotFoundException();
         }
+        logDBQuery("database", "get call records for user %d".formatted(userId));
         return callRecordRepository.findTop50ByCallerOrReceiverOrderByStartedAtDesc(userId, userId);
     }
 
     private void publishCallMessage(CallMessage callMessage, String topic) {
         try {
             String callMessageString = objectMapper.writeValueAsString(callMessage);
+            System.out.println("Publishing call message to topic %s".formatted(topic));
             messagePublisher.publish(topic, callMessageString);
         } catch (JsonProcessingException e) {
             System.err.println("Error serializing call message to JSON.");
@@ -201,7 +221,7 @@ public class CallServiceImpl implements CallService {
     private void updateStatusForUser(Long userId, String status) {
         UserStatusView callerStatus = new UserStatusView(userId, status);
         if (!statusServiceClient.setUserStatus(callerStatus)) {
-            System.err.println("Failed to set status to online for user ID " + userId);
+            System.err.println("Failed to set status to %s for user %d".formatted(status, userId));
         }
     }
 }

@@ -26,11 +26,31 @@ public class FriendServiceImpl implements FriendService{
     private final UserServiceClient userServiceClient;
     private final InvitationRepository invitationRepository;
 
+    private void logDBQuery(String queryDescription) {
+        System.out.println("Querying database to %s".formatted(queryDescription));
+    }
+
+    private void logDBStore(String storedObject) {
+        System.out.println("Storing %s in database".formatted(storedObject));
+    }
+
+    private void logDBDelete(String storedObject) {
+        System.out.println("Deleting %s from database".formatted(storedObject));
+    }
+
+    private void logPubMessage(String messageContent, String recipient) {
+        System.out.println("Publishing message with %s to %s".formatted(messageContent, recipient));
+    }
+
     @Override
     public boolean areFriends(Long user1, Long user2) throws UserNotFoundException {
         if (!userServiceClient.userExists(user1) || !userServiceClient.userExists(user2)) {
             throw new UserNotFoundException();
         }
+        logDBQuery("check if user %d and user %d are friends".formatted(
+                user1,
+                user2
+        ));
         return friendRepository.existsByUserIdAndFriendId(user1, user2);
     }
 
@@ -40,6 +60,7 @@ public class FriendServiceImpl implements FriendService{
         Long invitee = invitation.getInvitee();
         Long inviter = invitation.getInviter();
         // Check for existing friendship or invitation
+        logDBQuery("check for existing invitation between users");
         if (areFriends(invitee, inviter) ||
             invitationRepository.existsByInviteeAndInviter(inviter, invitee) ||
             invitationRepository.existsByInviteeAndInviter(invitee, inviter)) {
@@ -50,6 +71,7 @@ public class FriendServiceImpl implements FriendService{
             throw new SelfRelationshipException();
         }
         // Save invitation
+        logDBStore("new invitation");
         Invitation savedInvitation = invitationRepository.save(invitation);
         // Publish messages
         publishInvitationMessage(new InvitationMessage(savedInvitation, "pending"), invitation.getInvitee());
@@ -62,6 +84,7 @@ public class FriendServiceImpl implements FriendService{
     @Transactional
     public void acceptInvitation(Long id) throws InvitationNotFoundException {
         // Find the invitation
+        logDBQuery("retrieve invitation %d".formatted(id));
         Invitation invitation = invitationRepository.findById(id)
                 .orElseThrow(InvitationNotFoundException::new);
         Long inviter = invitation.getInviter();
@@ -70,12 +93,14 @@ public class FriendServiceImpl implements FriendService{
         FriendRelationship relationship1 = new FriendRelationship();
         relationship1.setUserId(inviter);
         relationship1.setFriendId(invitee);
+        logDBStore("new friend relationship");
         friendRepository.save(relationship1);
         FriendRelationship relationship2 = new FriendRelationship();
         relationship2.setUserId(invitee);
         relationship2.setFriendId(inviter);
         friendRepository.save(relationship2);
         // Delete the invitation
+        logDBDelete("invitation %d".formatted(id));
         invitationRepository.delete(invitation);
         // Publish messages
         InvitationMessage invitationMessage = new InvitationMessage(invitation, "accepted");
@@ -88,11 +113,13 @@ public class FriendServiceImpl implements FriendService{
     @Override
     public void declineInvitation(Long id) throws InvitationNotFoundException {
         // Find the invitation
+        logDBQuery("retrieve invitation %d".formatted(id));
         Invitation invitation = invitationRepository.findById(id)
                 .orElseThrow(InvitationNotFoundException::new);
         Long inviter = invitation.getInviter();
         Long invitee = invitation.getInvitee();
         // Delete the invitation
+        logDBDelete("invitation %d".formatted(id));
         invitationRepository.delete(invitation);
         // Publish messages
         InvitationMessage invitationMessage = new InvitationMessage(invitation, "declined");
@@ -113,6 +140,7 @@ public class FriendServiceImpl implements FriendService{
         if (!userServiceClient.userExists(inviter)) {
             throw new UserNotFoundException();
         }
+        logDBQuery("get outbound invitations for user %d".formatted(inviter));
         return invitationRepository.findByInviter(inviter);
     }
 
@@ -121,12 +149,14 @@ public class FriendServiceImpl implements FriendService{
         if (!userServiceClient.userExists(invitee)) {
             throw new UserNotFoundException();
         }
+        logDBQuery("get incoming invitations for user %d".formatted(invitee));
         return invitationRepository.findByInvitee(invitee);
     }
 
     private void publishInvitationMessage(InvitationMessage message, Long recipient) {
         try {
             String jsonMessage = new ObjectMapper().writeValueAsString(message);
+            logPubMessage("updated invitation", "user %d".formatted(recipient));
             messagePublisher.publish("invitations." + recipient, jsonMessage);
         } catch (JsonProcessingException e) {
             System.err.println("Error serializing user status to JSON.");
@@ -137,6 +167,7 @@ public class FriendServiceImpl implements FriendService{
     private void publishFriendshipMessage(FriendRelationship relationship, Long recipient) {
         try {
             String jsonMessage = new ObjectMapper().writeValueAsString(relationship);
+            logPubMessage("updated friendsip", "user %d".formatted(recipient));
             messagePublisher.publish("friends." + recipient, jsonMessage);
         } catch (JsonProcessingException e) {
             System.err.println("Error serializing user status to JSON.");
