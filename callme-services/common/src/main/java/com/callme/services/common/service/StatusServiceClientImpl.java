@@ -17,6 +17,10 @@ public class StatusServiceClientImpl implements StatusServiceClient {
     private String statusServiceURL;
     @Override
     public boolean setUserStatus(UserStatusView userStatusView) {
+        System.out.println("Sending request to status service to set user %d status to %s".formatted(
+                userStatusView.getId(),
+                userStatusView.getStatus()
+        ));
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -36,6 +40,7 @@ public class StatusServiceClientImpl implements StatusServiceClient {
 
     @Override
     public Optional<UserStatusView> getUserStatus(Long id) {
+        System.out.println("Sending request to status service to get user %d's status".formatted(id));
         try {
             UserStatusView userStatusView = restTemplate.getForObject(
                     statusServiceURL + "/status/" + id,

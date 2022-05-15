@@ -18,6 +18,10 @@ public class FriendServiceClientImpl implements FriendServiceClient {
 
     @Override
     public boolean areFriends(Long user1, Long user2) {
+        System.out.println("Sending request to friend service to check if user %d and %d are friends".formatted(
+                user1,
+                user2
+        ));
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);

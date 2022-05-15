@@ -24,6 +24,14 @@ public class UserStatusServiceImpl implements UserStatusService {
     @Value("${USER_STATUS_TTL}")
     private Long userStatusTTL;
 
+    private void logDBQuery(String queryDescription) {
+        System.out.println("Querying redis to %s".formatted(queryDescription));
+    }
+
+    private void logDBStore(String storedObject) {
+        System.out.println("Storing %s in redis".formatted(storedObject));
+    }
+
     @Override
     public Optional<UserStatus> getUserStatusById(Long id) {
         // Validate User ID
@@ -31,6 +39,7 @@ public class UserStatusServiceImpl implements UserStatusService {
             return Optional.empty();
         }
 
+        logDBQuery("retrieve status for user %d".formatted(id));
         Optional<UserStatus> optionalUserStatus = userStatusRepository.findById(id);
         if (optionalUserStatus.isPresent()) {
             // Status for that user found
@@ -59,6 +68,7 @@ public class UserStatusServiceImpl implements UserStatusService {
             return false;
         }
 
+        logDBStore("user's status");
         if (userStatus.getStatus().equals("offline")) {
             // Can remove existing entry to indicate offline
             userStatusRepository.delete(userStatus);
@@ -79,6 +89,10 @@ public class UserStatusServiceImpl implements UserStatusService {
         try {
             UserStatusView userStatusView = new UserStatusView(userStatus.getId(), userStatus.getStatus());
             String statusMessage = new ObjectMapper().writeValueAsString(userStatusView);
+            System.out.println("Publishing message that user %d's status is %s".formatted(
+                    userStatus.getId(),
+                    userStatus.getStatus()
+            ));
             messagePublisher.publish("status." + userStatus.getId(), statusMessage);
         } catch (JsonProcessingException e) {
             System.err.println("Error serializing user status to JSON.");

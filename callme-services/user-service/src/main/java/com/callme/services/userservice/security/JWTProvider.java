@@ -17,6 +17,7 @@ public class JWTProvider {
     private int jwtExpirationInMs;
 
     public String generateToken(AppUser appUser) {
+        System.out.println("Generating JWT");
         // Determine expiration time
         Date curTime = new Date();
         Date expireTime = new Date(curTime.getTime() + jwtExpirationInMs);
@@ -31,6 +32,7 @@ public class JWTProvider {
     }
 
     public boolean isValidToken(String token) {
+        System.out.println("Validating JWT");
         try {
             Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token);
             return true;

@@ -15,8 +15,9 @@ public class UserServiceClientImpl implements UserServiceClient {
     private String userServiceURL;
     @Override
     public boolean userExists(Long id) {
+        System.out.println("Sending request to user service to check if user %d exists".formatted(id));
         try {
-            ResponseEntity<String> response = restTemplate.getForEntity(userServiceURL + "/user/" + id, String.class);
+            ResponseEntity<String> response = restTemplate.getForEntity(userServiceURL + "/user/" + id + "/exists", String.class);
         } catch (HttpClientErrorException e) {
             // Got 4XX - user doesn't exist
             return false;

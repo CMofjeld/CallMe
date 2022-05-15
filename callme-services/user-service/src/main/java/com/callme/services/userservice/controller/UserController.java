@@ -29,19 +29,31 @@ public class UserController {
     private final JWTProvider jwtProvider;
     private final StatusServiceClient statusServiceClient;
 
+    private void logReceivedRequest(String requestAction) {
+        System.out.println("Received request to " + requestAction);
+    }
+
+    private void logResponse(String responseContent) {
+        System.out.println("Returning response with " + responseContent);
+    }
+
     @PostMapping(path = "register")
     public ResponseEntity<UserView> registerNewUser(@Valid @RequestBody AppUser appUser) {
+        logReceivedRequest("register user with name %s".formatted(appUser.getUsername()));
         AppUser createdUser = userService.addNewUser(appUser);
         UserView userView = new UserView(appUser.getId(), appUser.getUsername());
+        logResponse("registered user");
         return ResponseEntity.status(HttpStatus.CREATED).body(userView);
     }
 
     @GetMapping(path = "{userId}")
     public ResponseEntity<UserView> getUserById(@PathVariable("userId") Long userId) {
+        logReceivedRequest("get user with ID %d".formatted(userId));
         Optional<AppUser> userOptional = userService.getUserById(userId);
         if (userOptional.isPresent()) {
             AppUser appUser = userOptional.get();
             UserView userView = new UserView(appUser.getId(), appUser.getUsername());
+            logResponse("user view");
             return ResponseEntity.ok().body(userView);
         } else {
             throw new UserNotFoundException();
@@ -50,6 +62,7 @@ public class UserController {
 
     @PostMapping(path = "login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
+        logReceivedRequest("log in %s".formatted(loginRequest.getUsername()));
         // Validate login credentials
         if (!userService.isValidLoginRequest(loginRequest.getUsername(), loginRequest.getPassword())) {
             throw new InvalidPasswordException();
@@ -66,6 +79,7 @@ public class UserController {
         }
         // Construct and return response
         LoginResponse loginResponse = new LoginResponse(token, new UserView(appUser.getId(), appUser.getUsername()));
+        logResponse("user view and JWT");
         return ResponseEntity.status(HttpStatus.CREATED).body(loginResponse);
     }
 
@@ -73,6 +87,7 @@ public class UserController {
     public ResponseEntity<Void> logout(
             @PathVariable("userId") Long userId
     ) {
+        logReceivedRequest("log out user %d".formatted(userId));
         // Validate user ID
         if (!userService.existsById(userId)) {
             throw new UserNotFoundException();
@@ -82,24 +97,41 @@ public class UserController {
         if (!statusServiceClient.setUserStatus(status)) {
             System.err.println("Failed to set status to offline for user ID " + userId);
         }
+        logResponse("status 200");
         return ResponseEntity.ok().build();
     }
 
     @GetMapping(path = "authenticate")
     public ResponseEntity<?> authenticate(HttpServletRequest request) {
+        logReceivedRequest("authenticate request");
         HttpStatus status =  HttpStatus.OK;
         String token = jwtProvider.getJwtFromRequest(request);
         if (token == null || !jwtProvider.isValidToken(token)) {
             status = HttpStatus.UNAUTHORIZED;
         }
+        logResponse("status 200");
         return new ResponseEntity<>(status);
     }
 
     @GetMapping(path = "by/username/{username}")
     public ResponseEntity<UserView> getUserByUsername(@PathVariable("username") String username) {
+        logReceivedRequest("get user with username %s".formatted(username));
         AppUser user = userService.getUserByUsername(username)
                 .orElseThrow(UserNotFoundException::new);
         UserView userView = new UserView(user.getId(), user.getUsername());
+        logResponse("user view");
         return ResponseEntity.ok().body(userView);
+    }
+
+    @GetMapping(path = "{userId}/exists")
+    public ResponseEntity<?> userExists(@PathVariable("userId") Long userId) {
+        logReceivedRequest("check if user %d exists".formatted(userId));
+        if (userService.existsById(userId)) {
+            logResponse("status 200");
+            return ResponseEntity.ok().build();
+        } else {
+            logResponse("status 400");
+            return ResponseEntity.badRequest().build();
+        }
     }
 }
