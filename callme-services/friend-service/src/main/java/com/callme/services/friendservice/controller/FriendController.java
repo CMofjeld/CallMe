@@ -97,7 +97,10 @@ public class FriendController {
     public ResponseEntity<Void> areFriends(
             @Valid @RequestBody FriendQuery friendQuery
     ) throws UserNotFoundException {
-        logRequest("check if user %d and user %d are friends");
+        logRequest("check if user %d and user %d are friends".formatted(
+                friendQuery.getUser1(),
+                friendQuery.getUser2()
+        ));
         boolean success = friendService.areFriends(friendQuery.getUser1(), friendQuery.getUser2());
         if (success) {
             logResponse("status 200");

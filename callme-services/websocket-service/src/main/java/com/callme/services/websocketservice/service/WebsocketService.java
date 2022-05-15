@@ -68,14 +68,13 @@ public class WebsocketService extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         // Create session entry and store it in the session directory
-        System.out.println("after connection established");
         Long userId = (Long) session.getAttributes().get("userId");
+        System.out.println("Established WebSocket connection with user %d".formatted(userId));
         Future<?> heartbeatFuture = executorService.submit(
                 new HeartbeatTask(userId, heartbeatInterval, messagePublisher)
         );
         SessionEntry sessionEntry = new SessionEntry(session, userId, heartbeatFuture);
         sessionRegistry.setSession(session.getId(), sessionEntry);
-        System.out.println("Added entry for: " + sessionEntry);
     }
 
     @Override
@@ -91,9 +90,10 @@ public class WebsocketService extends TextWebSocketHandler {
         }
         // Remove it from the session registry
         SessionEntry sessionEntry = sessionRegistry.removeSession(sessionId);
+        Long userId = sessionEntry.getUserId();
+        System.out.println("WebSocket connection with user %d closed".formatted(userId));
         // Stop its heartbeat task
         sessionEntry.getHeartbeatFuture().cancel(true);
-        System.out.println("Removed entry for: " + sessionId);
     }
 
     private void addListenerToTopic(String topic) {

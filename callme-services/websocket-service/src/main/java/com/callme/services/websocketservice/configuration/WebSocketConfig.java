@@ -34,12 +34,10 @@ public class WebSocketConfig implements WebSocketConfigurer {
             public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
                 // Get section of path associated with user ID
                 String path = request.getURI().getPath();
-                System.out.println(path);
                 String userIdString = path.substring(path.lastIndexOf('/') + 1);
                 try {
                     Long userId = Long.valueOf(userIdString);
                     attributes.put("userId", userId);
-                    System.out.println("Successfully parsed user ID: " + userId);
                     return true;
                 } catch (NumberFormatException e) {
                     System.err.println("Invalid path for handshake. Couldn't parse user ID to long.");
@@ -49,7 +47,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
             @Override
             public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Exception exception) {
-                System.out.println("After handshake");
+
             }
         };
     }

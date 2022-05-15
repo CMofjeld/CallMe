@@ -27,6 +27,7 @@ public class RedisSubscriber implements MessageListener {
     public void onMessage(Message message, byte[] pattern) {
         // Convert to client format
         String topic = new String(message.getChannel(), StandardCharsets.UTF_8);
+        System.out.println("Received message from topic %s".formatted(topic));
         String body = message.toString();
         TextMessage clientMessage;
         try {
@@ -43,7 +44,9 @@ public class RedisSubscriber implements MessageListener {
         // Republish message to them
         for (String sessionId : topicSubscribers) {
             SessionEntry sessionEntry = sessionRegistry.getSession(sessionId).orElseThrow();
+            Long userId = sessionEntry.getUserId();
             try {
+                System.out.println("Forwarding message to user %d".formatted(userId));
                 sessionEntry.getSession().sendMessage(clientMessage);
             } catch (IOException e) {
                 throw new RuntimeException(e);
